@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { formatPrice } from "../utils/helpers";
-import { FiCreditCard, FiSmartphone, FiPackage } from "react-icons/fi";
+import { FiCreditCard, FiSmartphone, FiPackage, FiCheck } from "react-icons/fi";
 import { sendOrderToTelegram } from "../services/telegramBot";
 import toast from "react-hot-toast";
 import { useTheme } from "../context/ThemeContext";
@@ -17,6 +17,8 @@ const Checkout = () => {
   const [shippingMethod, setShippingMethod] = useState("standard");
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [loading, setLoading] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState(null);
   const { accentColor } = useTheme();
 
   const {
@@ -25,14 +27,13 @@ const Checkout = () => {
     formState: { errors },
   } = useForm();
 
-  // Fix: Move navigation logic to useEffect
+  // Check if cart is empty and redirect
   useEffect(() => {
     if (cart.items.length === 0) {
       navigate("/cart");
     }
   }, [cart.items.length, navigate]);
 
-  // Don't render anything while checking cart
   if (cart.items.length === 0) {
     return null;
   }
@@ -56,12 +57,74 @@ const Checkout = () => {
 
   const subtotal = cart.total;
   const shipping = shippingCost[shippingMethod];
-  const total = subtotal + shipping;
+
+  // Calculate discount based on promo code
+  const calculateDiscount = () => {
+    if (!appliedPromo) return 0;
+    if (appliedPromo.code === "SAVE10") {
+      return subtotal * 0.1;
+    }
+    if (appliedPromo.code === "FREESHIP") {
+      return 0;
+    }
+    return 0;
+  };
+
+  const discount = calculateDiscount();
+  const finalShipping = appliedPromo?.code === "FREESHIP" ? 0 : shipping;
+  const total = subtotal + finalShipping - discount;
+
+  // Handle promo code application
+  const handleApplyPromo = () => {
+    const promoCodeUpper = promoCode.toUpperCase();
+    if (promoCodeUpper === "SAVE10") {
+      setAppliedPromo({ code: "SAVE10", discount: 10, type: "percentage" });
+      toast.success("10% discount applied!");
+    } else if (promoCodeUpper === "FREESHIP") {
+      setAppliedPromo({
+        code: "FREESHIP",
+        discount: shipping,
+        type: "shipping",
+      });
+      toast.success("Free shipping applied!");
+    } else {
+      toast.error("Invalid promo code. Try SAVE10 or FREESHIP");
+      return;
+    }
+    setPromoCode("");
+  };
+
+  // Handle remove promo code
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    toast.success("Promo code removed");
+  };
 
   const onSubmit = async (data) => {
     if (step === 1) {
+      // Validate shipping form
+      if (
+        !data.firstName ||
+        !data.lastName ||
+        !data.email ||
+        !data.address ||
+        !data.city ||
+        !data.state ||
+        !data.zip ||
+        !data.phone
+      ) {
+        toast.error("Please fill in all shipping information");
+        return;
+      }
       setStep(2);
     } else if (step === 2) {
+      // Validate payment
+      if (paymentMethod === "card") {
+        if (!data.cardNumber || !data.expiry || !data.cvv) {
+          toast.error("Please fill in all card details");
+          return;
+        }
+      }
       setStep(3);
     } else {
       setLoading(true);
@@ -69,7 +132,8 @@ const Checkout = () => {
         const orderData = {
           items: cart.items,
           subtotal: subtotal,
-          shipping: shipping,
+          shipping: finalShipping,
+          discount: discount,
           total: total,
           email: data.email,
           phone: data.phone,
@@ -79,14 +143,13 @@ const Checkout = () => {
           zip: data.zip,
           shippingMethod: shippingMethod,
           paymentMethod: paymentMethod,
+          promoCode: appliedPromo?.code || null,
+          discountAmount: discount,
+          firstName: data.firstName,
+          lastName: data.lastName,
         };
 
-        // Send to Telegram (don't await - let it run in background)
-        sendOrderToTelegram(orderData, user).catch((err) => {
-          console.error("Telegram notification failed:", err);
-          // Don't show error to user - order still successful
-        });
-
+        await sendOrderToTelegram(orderData, user);
         toast.success("Order placed successfully!");
         clearCart();
         navigate("/");
@@ -117,7 +180,7 @@ const Checkout = () => {
                     : "bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
                 }`}
               >
-                {num}
+                {step > num ? <FiCheck className="w-4 h-4" /> : num}
               </div>
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {num === 1 && "Shipping"}
@@ -143,7 +206,7 @@ const Checkout = () => {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                          First Name
+                          First Name *
                         </label>
                         <input
                           {...register("firstName", { required: true })}
@@ -152,7 +215,7 @@ const Checkout = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                          Last Name
+                          Last Name *
                         </label>
                         <input
                           {...register("lastName", { required: true })}
@@ -163,7 +226,7 @@ const Checkout = () => {
 
                     <div>
                       <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        Email
+                        Email *
                       </label>
                       <input
                         type="email"
@@ -175,7 +238,7 @@ const Checkout = () => {
 
                     <div>
                       <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        Address
+                        Address *
                       </label>
                       <input
                         {...register("address", { required: true })}
@@ -186,7 +249,7 @@ const Checkout = () => {
                     <div className="grid md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                          City
+                          City *
                         </label>
                         <input
                           {...register("city", { required: true })}
@@ -195,7 +258,7 @@ const Checkout = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                          State
+                          State *
                         </label>
                         <input
                           {...register("state", { required: true })}
@@ -204,7 +267,7 @@ const Checkout = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                          ZIP Code
+                          ZIP Code *
                         </label>
                         <input
                           {...register("zip", { required: true })}
@@ -215,7 +278,7 @@ const Checkout = () => {
 
                     <div>
                       <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        Phone
+                        Phone *
                       </label>
                       <input
                         type="tel"
@@ -339,10 +402,12 @@ const Checkout = () => {
                       <div className="space-y-4 mt-4">
                         <div>
                           <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                            Card Number
+                            Card Number *
                           </label>
                           <input
-                            {...register("cardNumber", { required: true })}
+                            {...register("cardNumber", {
+                              required: paymentMethod === "card",
+                            })}
                             placeholder="1234 5678 9012 3456"
                             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all"
                           />
@@ -350,20 +415,24 @@ const Checkout = () => {
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                              Expiry Date
+                              Expiry Date *
                             </label>
                             <input
-                              {...register("expiry", { required: true })}
+                              {...register("expiry", {
+                                required: paymentMethod === "card",
+                              })}
                               placeholder="MM/YY"
                               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all"
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                              CVV
+                              CVV *
                             </label>
                             <input
-                              {...register("cvv", { required: true })}
+                              {...register("cvv", {
+                                required: paymentMethod === "card",
+                              })}
                               placeholder="123"
                               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all"
                             />
@@ -406,7 +475,7 @@ const Checkout = () => {
                           Shipping Address
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Address will be confirmed
+                          Will be confirmed at final step
                         </p>
                       </div>
                     </div>
@@ -485,6 +554,54 @@ const Checkout = () => {
                   ))}
                 </div>
 
+                {/* Promo Code Section */}
+                <div className="mb-4 pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Promo Code
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="Enter code"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all text-sm"
+                      disabled={!!appliedPromo}
+                    />
+                    {!appliedPromo ? (
+                      <button
+                        type="button"
+                        onClick={handleApplyPromo}
+                        className="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors text-sm"
+                      >
+                        Apply
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleRemovePromo}
+                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  {!appliedPromo && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Try "SAVE10" for 10% off or "FREESHIP" for free shipping
+                    </p>
+                  )}
+                  {appliedPromo && (
+                    <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                      <FiCheck className="w-3 h-3" />
+                      {appliedPromo.code === "SAVE10"
+                        ? "10% discount applied!"
+                        : "Free shipping applied!"}
+                    </p>
+                  )}
+                </div>
+
+                {/* Order Totals */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Subtotal ({cart.itemCount} items)</span>
@@ -493,9 +610,20 @@ const Checkout = () => {
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
                     <span>
-                      {shipping === 0 ? "Free" : formatPrice(shipping)}
+                      {finalShipping === 0
+                        ? "Free"
+                        : formatPrice(finalShipping)}
                     </span>
                   </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>
+                        Discount{" "}
+                        {appliedPromo?.code === "SAVE10" ? "(10% off)" : ""}
+                      </span>
+                      <span>-{formatPrice(discount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
                     <span>Total</span>
                     <span className="text-green-600 dark:text-green-400">
