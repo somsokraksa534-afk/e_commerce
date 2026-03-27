@@ -4,13 +4,7 @@ import { useForm } from "react-hook-form";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { formatPrice } from "../utils/helpers";
-import {
-  FiCreditCard,
-  FiSmartphone,
-  FiPackage,
-  FiCheck,
-  FiGift,
-} from "react-icons/fi";
+import { FiCreditCard, FiSmartphone, FiPackage, FiCheck, FiGift } from "react-icons/fi";
 import { sendOrderToTelegram } from "../services/telegramBot";
 import toast from "react-hot-toast";
 import { useTheme } from "../context/ThemeContext";
@@ -85,9 +79,7 @@ const Checkout = () => {
     const promoCodeUpper = promoCode.toUpperCase();
     if (promoCodeUpper === "RAKSA168") {
       setAppliedPromo({ code: "RAKSA168", discount: 80, type: "percentage" });
-      toast.success("🎉 80% discount applied! Great savings!", {
-        duration: 4000,
-      });
+      toast.success("🎉 80% discount applied! Great savings!", { duration: 4000 });
       setPromoCode("");
     } else if (promoCodeUpper === "FREESHIP") {
       setAppliedPromo({
@@ -159,9 +151,7 @@ const Checkout = () => {
         };
 
         await sendOrderToTelegram(orderData, user);
-        toast.success(
-          "Order placed successfully! Thank you for shopping with us! 🎉",
-        );
+        toast.success("Order placed successfully! Thank you for shopping with us! 🎉");
         clearCart();
         navigate("/");
       } catch (error) {
@@ -489,6 +479,19 @@ const Checkout = () => {
                           Will be confirmed at final step
                         </p>
                       </div>
+                      {appliedPromo && (
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                          <h3 className="font-semibold mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
+                            <FiGift className="w-4 h-4" />
+                            Promo Code Applied
+                          </h3>
+                          <p className="text-sm text-green-600 dark:text-green-400">
+                            {appliedPromo.code === "RAKSA168"
+                              ? "🎉 80% OFF Discount Applied! You saved " + formatPrice(discount)
+                              : "🚚 Free Shipping Applied! You saved $" + shipping.toFixed(2)}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -620,9 +623,7 @@ const Checkout = () => {
                     <div className="mt-2 p-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-lg border border-green-300 dark:border-green-700">
                       <p className="text-xs text-green-700 dark:text-green-300 flex items-center gap-1">
                         <FiCheck className="w-3 h-3" />
-                        <span className="font-semibold">
-                          🎉 80% OFF applied! You saved {formatPrice(discount)}
-                        </span>
+                        <span className="font-semibold">🎉 80% OFF applied! You saved {formatPrice(discount)}</span>
                       </p>
                     </div>
                   )}
@@ -630,10 +631,7 @@ const Checkout = () => {
                     <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
                       <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-1">
                         <FiCheck className="w-3 h-3" />
-                        <span className="font-semibold">
-                          🚚 Free shipping applied! You saved $
-                          {shipping.toFixed(2)}
-                        </span>
+                        <span className="font-semibold">🚚 Free shipping applied! You saved ${shipping.toFixed(2)}</span>
                       </p>
                     </div>
                   )}

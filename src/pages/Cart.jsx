@@ -19,17 +19,6 @@ const Cart = () => {
   const [shipping, setShipping] = useState(5.99);
   const [discount, setDiscount] = useState(0);
 
-  const handlePromoApply = () => {
-    if (promoCode === "RAKSA168") {
-      setDiscount(cart.total * 0.8);
-      alert("Promo code applied! 80% discount");
-    } else if (promoCode === "FREESHIP") {
-      setShipping(0);
-      alert("Free shipping applied!");
-    } else {
-      alert("Invalid promo code");
-    }
-  };
 
   const subtotal = cart.total;
   const total = subtotal + shipping - discount;
@@ -217,30 +206,7 @@ const Cart = () => {
                 </div>
               </div>
 
-              {/* Promo Code */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                  Promo Code
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Enter code"
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white transition-all"
-                  />
-                  <button
-                    onClick={handlePromoApply}
-                    className="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    Apply
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Try "RAKSA168" or "FREESHIP"
-                </p>
-              </div>
+
 
               <button
                 onClick={() => navigate("/checkout")}
