@@ -80,6 +80,7 @@ const Checkout = () => {
     if (promoCodeUpper === "RAKSA168") {
       setAppliedPromo({ code: "RAKSA168", discount: 80, type: "percentage" });
       toast.success("80% discount applied! 🎉");
+      setPromoCode("");
     } else if (promoCodeUpper === "FREESHIP") {
       setAppliedPromo({
         code: "FREESHIP",
@@ -87,11 +88,10 @@ const Checkout = () => {
         type: "shipping",
       });
       toast.success("Free shipping applied! 🚚");
+      setPromoCode("");
     } else {
       toast.error("Invalid promo code. Try RAKSA168 or FREESHIP");
-      return;
     }
-    setPromoCode("");
   };
 
   // Handle remove promo code
@@ -479,6 +479,19 @@ const Checkout = () => {
                           Will be confirmed at final step
                         </p>
                       </div>
+                      {appliedPromo && (
+                        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                          <h3 className="font-semibold mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
+                            <FiCheck className="w-4 h-4" />
+                            Applied Promo Code
+                          </h3>
+                          <p className="text-sm text-green-600 dark:text-green-400">
+                            {appliedPromo.code === "RAKSA168"
+                              ? "🎉 80% OFF Discount Applied!"
+                              : "🚚 Free Shipping Applied!"}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -512,7 +525,7 @@ const Checkout = () => {
               </div>
             </div>
 
-            {/* Order Summary Sidebar */}
+            {/* Order Summary Sidebar - Visible on all steps */}
             <div>
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sticky top-24">
                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
@@ -555,7 +568,7 @@ const Checkout = () => {
                   ))}
                 </div>
 
-                {/* Promo Code Section */}
+                {/* Promo Code Section - Visible on all steps */}
                 <div className="mb-4 pt-2 border-t border-gray-200 dark:border-gray-700">
                   <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                     Promo Code
@@ -621,7 +634,7 @@ const Checkout = () => {
                   )}
                 </div>
 
-                {/* Order Totals */}
+                {/* Order Totals - Updated in real-time */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Subtotal ({cart.itemCount} items)</span>
@@ -651,6 +664,20 @@ const Checkout = () => {
                     </span>
                   </div>
                 </div>
+
+                {/* Applied Promo Badge */}
+                {appliedPromo && (
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-center gap-2 text-xs bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
+                      <FiCheck className="w-3 h-3 text-green-600" />
+                      <span className="text-green-700 dark:text-green-400 font-medium">
+                        {appliedPromo.code === "RAKSA168"
+                          ? "80% OFF applied - Great savings!"
+                          : "Free shipping applied!"}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Payment Security Badge */}
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
