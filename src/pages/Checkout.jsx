@@ -61,8 +61,8 @@ const Checkout = () => {
   // Calculate discount based on promo code
   const calculateDiscount = () => {
     if (!appliedPromo) return 0;
-    if (appliedPromo.code === "SAVE10") {
-      return subtotal * 0.1;
+    if (appliedPromo.code === "RAKSA168") {
+      return subtotal * 0.8; // 80% discount
     }
     if (appliedPromo.code === "FREESHIP") {
       return 0;
@@ -77,18 +77,18 @@ const Checkout = () => {
   // Handle promo code application
   const handleApplyPromo = () => {
     const promoCodeUpper = promoCode.toUpperCase();
-    if (promoCodeUpper === "SAVE10") {
-      setAppliedPromo({ code: "SAVE10", discount: 10, type: "percentage" });
-      toast.success("10% discount applied!");
+    if (promoCodeUpper === "RAKSA168") {
+      setAppliedPromo({ code: "RAKSA168", discount: 80, type: "percentage" });
+      toast.success("80% discount applied! 🎉");
     } else if (promoCodeUpper === "FREESHIP") {
       setAppliedPromo({
         code: "FREESHIP",
         discount: shipping,
         type: "shipping",
       });
-      toast.success("Free shipping applied!");
+      toast.success("Free shipping applied! 🚚");
     } else {
-      toast.error("Invalid promo code. Try SAVE10 or FREESHIP");
+      toast.error("Invalid promo code. Try RAKSA168 or FREESHIP");
       return;
     }
     setPromoCode("");
@@ -145,6 +145,7 @@ const Checkout = () => {
           paymentMethod: paymentMethod,
           promoCode: appliedPromo?.code || null,
           discountAmount: discount,
+          discountPercentage: appliedPromo?.code === "RAKSA168" ? 80 : 0,
           firstName: data.firstName,
           lastName: data.lastName,
         };
@@ -587,16 +588,35 @@ const Checkout = () => {
                     )}
                   </div>
                   {!appliedPromo && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Try "SAVE10" for 10% off or "FREESHIP" for free shipping
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500">
+                        Try{" "}
+                        <span className="font-bold text-green-600">
+                          "RAKSA168"
+                        </span>{" "}
+                        for 80% OFF! 🎉
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Or{" "}
+                        <span className="font-bold text-green-600">
+                          "FREESHIP"
+                        </span>{" "}
+                        for free shipping
+                      </p>
+                    </div>
+                  )}
+                  {appliedPromo && appliedPromo.code === "RAKSA168" && (
+                    <p className="text-xs text-green-600 mt-2 flex items-center gap-1 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg">
+                      <FiCheck className="w-3 h-3" />
+                      <span className="font-semibold">
+                        80% discount applied! 🎉
+                      </span>
                     </p>
                   )}
-                  {appliedPromo && (
+                  {appliedPromo && appliedPromo.code === "FREESHIP" && (
                     <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
                       <FiCheck className="w-3 h-3" />
-                      {appliedPromo.code === "SAVE10"
-                        ? "10% discount applied!"
-                        : "Free shipping applied!"}
+                      Free shipping applied! 🚚
                     </p>
                   )}
                 </div>
@@ -616,17 +636,17 @@ const Checkout = () => {
                     </span>
                   </div>
                   {discount > 0 && (
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-green-600 font-semibold">
                       <span>
                         Discount{" "}
-                        {appliedPromo?.code === "SAVE10" ? "(10% off)" : ""}
+                        {appliedPromo?.code === "RAKSA168" ? "(80% OFF)" : ""}
                       </span>
                       <span>-{formatPrice(discount)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
-                    <span>Total</span>
-                    <span className="text-green-600 dark:text-green-400">
+                  <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <span className="text-gray-900 dark:text-white">Total</span>
+                    <span className="text-green-600 dark:text-green-400 text-xl">
                       {formatPrice(total)}
                     </span>
                   </div>
