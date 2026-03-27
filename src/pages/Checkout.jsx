@@ -489,21 +489,6 @@ const Checkout = () => {
                           Will be confirmed at final step
                         </p>
                       </div>
-                      {appliedPromo && (
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                          <h3 className="font-semibold mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
-                            <FiGift className="w-4 h-4" />
-                            Promo Code Applied
-                          </h3>
-                          <p className="text-sm text-green-600 dark:text-green-400">
-                            {appliedPromo.code === "RAKSA168"
-                              ? "🎉 80% OFF Discount Applied! You saved " +
-                                formatPrice(discount)
-                              : "🚚 Free Shipping Applied! You saved $" +
-                                shipping.toFixed(2)}
-                          </p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
