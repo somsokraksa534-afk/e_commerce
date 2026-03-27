@@ -4,7 +4,13 @@ import { useForm } from "react-hook-form";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { formatPrice } from "../utils/helpers";
-import { FiCreditCard, FiSmartphone, FiPackage, FiCheck } from "react-icons/fi";
+import {
+  FiCreditCard,
+  FiSmartphone,
+  FiPackage,
+  FiCheck,
+  FiGift,
+} from "react-icons/fi";
 import { sendOrderToTelegram } from "../services/telegramBot";
 import toast from "react-hot-toast";
 import { useTheme } from "../context/ThemeContext";
@@ -79,7 +85,9 @@ const Checkout = () => {
     const promoCodeUpper = promoCode.toUpperCase();
     if (promoCodeUpper === "RAKSA168") {
       setAppliedPromo({ code: "RAKSA168", discount: 80, type: "percentage" });
-      toast.success("80% discount applied! 🎉");
+      toast.success("🎉 80% discount applied! Great savings!", {
+        duration: 4000,
+      });
       setPromoCode("");
     } else if (promoCodeUpper === "FREESHIP") {
       setAppliedPromo({
@@ -87,7 +95,7 @@ const Checkout = () => {
         discount: shipping,
         type: "shipping",
       });
-      toast.success("Free shipping applied! 🚚");
+      toast.success("🚚 Free shipping applied!", { duration: 4000 });
       setPromoCode("");
     } else {
       toast.error("Invalid promo code. Try RAKSA168 or FREESHIP");
@@ -151,7 +159,9 @@ const Checkout = () => {
         };
 
         await sendOrderToTelegram(orderData, user);
-        toast.success("Order placed successfully!");
+        toast.success(
+          "Order placed successfully! Thank you for shopping with us! 🎉",
+        );
         clearCart();
         navigate("/");
       } catch (error) {
@@ -480,15 +490,17 @@ const Checkout = () => {
                         </p>
                       </div>
                       {appliedPromo && (
-                        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
                           <h3 className="font-semibold mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
-                            <FiCheck className="w-4 h-4" />
-                            Applied Promo Code
+                            <FiGift className="w-4 h-4" />
+                            Promo Code Applied
                           </h3>
                           <p className="text-sm text-green-600 dark:text-green-400">
                             {appliedPromo.code === "RAKSA168"
-                              ? "🎉 80% OFF Discount Applied!"
-                              : "🚚 Free Shipping Applied!"}
+                              ? "🎉 80% OFF Discount Applied! You saved " +
+                                formatPrice(discount)
+                              : "🚚 Free Shipping Applied! You saved $" +
+                                shipping.toFixed(2)}
                           </p>
                         </div>
                       )}
@@ -525,7 +537,7 @@ const Checkout = () => {
               </div>
             </div>
 
-            {/* Order Summary Sidebar - Visible on all steps */}
+            {/* Order Summary Sidebar - Visible on all steps with promo code section */}
             <div>
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sticky top-24">
                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
@@ -568,9 +580,10 @@ const Checkout = () => {
                   ))}
                 </div>
 
-                {/* Promo Code Section - Visible on all steps */}
+                {/* Promo Code Section - Always visible on all steps */}
                 <div className="mb-4 pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <FiGift className="w-4 h-4" />
                     Promo Code
                   </label>
                   <div className="flex space-x-2">
@@ -586,7 +599,7 @@ const Checkout = () => {
                       <button
                         type="button"
                         onClick={handleApplyPromo}
-                        className="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors text-sm"
+                        className="bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors text-sm whitespace-nowrap"
                       >
                         Apply
                       </button>
@@ -594,7 +607,7 @@ const Checkout = () => {
                       <button
                         type="button"
                         onClick={handleRemovePromo}
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm"
+                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm whitespace-nowrap"
                       >
                         Remove
                       </button>
@@ -603,14 +616,14 @@ const Checkout = () => {
                   {!appliedPromo && (
                     <div className="mt-2">
                       <p className="text-xs text-gray-500">
-                        Try{" "}
+                        ✨ Try{" "}
                         <span className="font-bold text-green-600">
                           "RAKSA168"
                         </span>{" "}
                         for 80% OFF! 🎉
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Or{" "}
+                        🚚 Or{" "}
                         <span className="font-bold text-green-600">
                           "FREESHIP"
                         </span>{" "}
@@ -619,18 +632,25 @@ const Checkout = () => {
                     </div>
                   )}
                   {appliedPromo && appliedPromo.code === "RAKSA168" && (
-                    <p className="text-xs text-green-600 mt-2 flex items-center gap-1 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg">
-                      <FiCheck className="w-3 h-3" />
-                      <span className="font-semibold">
-                        80% discount applied! 🎉
-                      </span>
-                    </p>
+                    <div className="mt-2 p-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-lg border border-green-300 dark:border-green-700">
+                      <p className="text-xs text-green-700 dark:text-green-300 flex items-center gap-1">
+                        <FiCheck className="w-3 h-3" />
+                        <span className="font-semibold">
+                          🎉 80% OFF applied! You saved {formatPrice(discount)}
+                        </span>
+                      </p>
+                    </div>
                   )}
                   {appliedPromo && appliedPromo.code === "FREESHIP" && (
-                    <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                      <FiCheck className="w-3 h-3" />
-                      Free shipping applied! 🚚
-                    </p>
+                    <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-1">
+                        <FiCheck className="w-3 h-3" />
+                        <span className="font-semibold">
+                          🚚 Free shipping applied! You saved $
+                          {shipping.toFixed(2)}
+                        </span>
+                      </p>
+                    </div>
                   )}
                 </div>
 
@@ -664,20 +684,6 @@ const Checkout = () => {
                     </span>
                   </div>
                 </div>
-
-                {/* Applied Promo Badge */}
-                {appliedPromo && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-center gap-2 text-xs bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
-                      <FiCheck className="w-3 h-3 text-green-600" />
-                      <span className="text-green-700 dark:text-green-400 font-medium">
-                        {appliedPromo.code === "RAKSA168"
-                          ? "80% OFF applied - Great savings!"
-                          : "Free shipping applied!"}
-                      </span>
-                    </div>
-                  </div>
-                )}
 
                 {/* Payment Security Badge */}
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
